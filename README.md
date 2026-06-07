@@ -1,55 +1,28 @@
-# Utility App Starter – CP3406 / CP5307
+# FocusMate – Smart Study Timer Utility App
 
-This is a basic Android app template for **Assessment 1: Utility App** in CP3406/CP5603..  
-It provides the structure for a simple tabular UI using **Jetpack Compose** and **Material Design 3**.
+FocusMate is a utility-style Android application developed for CP3406 Assessment 1.
 
----
+The app is designed to help students manage focused study sessions, view daily study progress, and receive motivational support at a glance.
 
-## Getting Started
+## Current Development Status
 
-### How to Run
-1. Clone or download this repo  
-2. Open in Android Studio  
-3. Run on an emulator or physical device (API 26+ recommended)  
+This project is based on the CP3406 / CP5307 Utility App starter template.
 
----
+Planned features include:
 
-## Composables
+- Focus session timer
+- Daily study goal progress
+- Settings screen to control timer and display options
+- Motivational quote feature using an external API
+- Jetpack Compose and Material Design 3 interface
+- ViewModel and Repository-based architecture
 
-### UtilityApp()
-- Contains the screen layout using a Scaffold
-- Toggles content between Utility and Settings
+## Technologies
 
-### UtilityScreen()
-- Displays a simple counter (replace with your utility logic)  
-- Includes a button to increment the counter
-
-### SettingsScreen()
-- Placeholder for user preferences or configuration  
-- Can be extended to modify main screen behavior (e.g., theme, units, limits)  
-
----
-
-## Key Concepts Covered
-
-| Week | Concept                        | Used In                          |
-|------|--------------------------------|----------------------------------|
-| 1    | Kotlin + Android Studio         | MainActivity.kt |
-| 2    | Jetpack Compose Layouts         | UtilityApp(), UtilityScreen(), SettingsScreen()   |
-| 3    | Material Design 3               | CP3406_CP5603UtilityAppStarterTemplateTheme, MaterialTheme.typography |
-| 4    | ViewModel | Not included in starter          |
-| 5    | Retrofit  | Not included in starter          |
-
----
-
-## Suggested Extensions
-- Replace counter with a real utility (e.g., hydration tracker, timer)  
-- Add a ViewModel for state management  
-- Use SharedPreferences or DataStore to persist settings  
-- Add a simple API call using Retrofit (e.g., fetch weather or quotes)  
-
----
-
-## 📚 License
-This template is provided for educational use in CP3406.  
-Feel free to modify and extend it for your assessment.
+- Kotlin
+- Android Studio
+- Jetpack Compose
+- Material Design 3
+- ViewModel
+- Repository Pattern
+- Retrofit
