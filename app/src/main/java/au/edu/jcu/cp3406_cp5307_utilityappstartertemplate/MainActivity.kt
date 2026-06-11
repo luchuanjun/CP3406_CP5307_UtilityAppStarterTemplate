@@ -32,7 +32,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,10 +39,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import au.edu.jcu.cp3406_cp5307_utilityappstartertemplate.ui.theme.CP3406_CP5603UtilityAppStarterTemplateTheme
-import kotlinx.coroutines.delay
 import androidx.lifecycle.viewmodel.compose.viewModel
+import au.edu.jcu.cp3406_cp5307_utilityappstartertemplate.ui.theme.CP3406_CP5603UtilityAppStarterTemplateTheme
 import au.edu.jcu.cp3406_cp5307_utilityappstartertemplate.viewmodel.FocusMateViewModel
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,36 +65,22 @@ fun UtilityAppPreview() {
 }
 
 @Composable
-fun UtilityApp() {
+fun UtilityApp(
+    focusMateViewModel: FocusMateViewModel = viewModel()
+) {
     var selectedTab by remember { mutableStateOf("Utility") }
 
-    var focusDuration by remember { mutableIntStateOf(25) }
-    var breakDuration by remember { mutableIntStateOf(5) }
-    var dailyGoal by remember { mutableIntStateOf(120) }
-    var completedMinutes by remember { mutableIntStateOf(0) }
-
-    var remainingSeconds by remember { mutableIntStateOf(focusDuration * 60) }
-    var isRunning by remember { mutableStateOf(false) }
-
-    var showMotivation by remember { mutableStateOf(true) }
-    var enableReminder by remember { mutableStateOf(true) }
-
-    LaunchedEffect(focusDuration) {
-        if (!isRunning) {
-            remainingSeconds = focusDuration * 60
-        }
+    LaunchedEffect(Unit) {
+        focusMateViewModel.loadMotivationalQuote()
     }
 
-    LaunchedEffect(isRunning, remainingSeconds) {
-        if (isRunning && remainingSeconds > 0) {
+    LaunchedEffect(
+        focusMateViewModel.isRunning,
+        focusMateViewModel.remainingSeconds
+    ) {
+        if (focusMateViewModel.isRunning && focusMateViewModel.remainingSeconds > 0) {
             delay(1000)
-            remainingSeconds -= 1
-        }
-
-        if (isRunning && remainingSeconds == 0) {
-            isRunning = false
-            completedMinutes += focusDuration
-            remainingSeconds = focusDuration * 60
+            focusMateViewModel.tickTimer()
         }
     }
 
@@ -121,45 +106,34 @@ fun UtilityApp() {
         Box(modifier = Modifier.padding(innerPadding)) {
             when (selectedTab) {
                 "Utility" -> UtilityScreen(
-                    focusDuration = focusDuration,
-                    breakDuration = breakDuration,
-                    dailyGoal = dailyGoal,
-                    completedMinutes = completedMinutes,
-                    remainingSeconds = remainingSeconds,
-                    isRunning = isRunning,
-                    showMotivation = showMotivation,
-                    enableReminder = enableReminder,
-                    onStart = { isRunning = true },
-                    onPause = { isRunning = false },
-                    onReset = {
-                        isRunning = false
-                        remainingSeconds = focusDuration * 60
-                    }
+                    focusDuration = focusMateViewModel.focusDuration,
+                    breakDuration = focusMateViewModel.breakDuration,
+                    dailyGoal = focusMateViewModel.dailyGoal,
+                    completedMinutes = focusMateViewModel.completedMinutes,
+                    remainingSeconds = focusMateViewModel.remainingSeconds,
+                    isRunning = focusMateViewModel.isRunning,
+                    showMotivation = focusMateViewModel.showMotivation,
+                    enableReminder = focusMateViewModel.enableReminder,
+                    quoteText = focusMateViewModel.quoteText,
+                    quoteAuthor = focusMateViewModel.quoteAuthor,
+                    quoteError = focusMateViewModel.quoteError,
+                    onRefreshQuote = focusMateViewModel::loadMotivationalQuote,
+                    onStart = focusMateViewModel::startTimer,
+                    onPause = focusMateViewModel::pauseTimer,
+                    onReset = focusMateViewModel::resetTimer
                 )
 
                 "Settings" -> SettingsScreen(
-                    focusDuration = focusDuration,
-                    breakDuration = breakDuration,
-                    dailyGoal = dailyGoal,
-                    showMotivation = showMotivation,
-                    enableReminder = enableReminder,
-                    onFocusDurationChange = {
-                        focusDuration = it
-                        isRunning = false
-                        remainingSeconds = it * 60
-                    },
-                    onBreakDurationChange = {
-                        breakDuration = it
-                    },
-                    onDailyGoalChange = {
-                        dailyGoal = it
-                    },
-                    onShowMotivationChange = {
-                        showMotivation = it
-                    },
-                    onEnableReminderChange = {
-                        enableReminder = it
-                    }
+                    focusDuration = focusMateViewModel.focusDuration,
+                    breakDuration = focusMateViewModel.breakDuration,
+                    dailyGoal = focusMateViewModel.dailyGoal,
+                    showMotivation = focusMateViewModel.showMotivation,
+                    enableReminder = focusMateViewModel.enableReminder,
+                    onFocusDurationChange = focusMateViewModel::updateFocusDuration,
+                    onBreakDurationChange = focusMateViewModel::updateBreakDuration,
+                    onDailyGoalChange = focusMateViewModel::updateDailyGoal,
+                    onShowMotivationChange = focusMateViewModel::updateShowMotivation,
+                    onEnableReminderChange = focusMateViewModel::updateEnableReminder
                 )
             }
         }
@@ -176,6 +150,10 @@ fun UtilityScreen(
     isRunning: Boolean,
     showMotivation: Boolean,
     enableReminder: Boolean,
+    quoteText: String,
+    quoteAuthor: String,
+    quoteError: Boolean,
+    onRefreshQuote: () -> Unit,
     onStart: () -> Unit,
     onPause: () -> Unit,
     onReset: () -> Unit
@@ -217,7 +195,12 @@ fun UtilityScreen(
         )
 
         if (showMotivation) {
-            MotivationCard()
+            MotivationCard(
+                quoteText = quoteText,
+                quoteAuthor = quoteAuthor,
+                quoteError = quoteError,
+                onRefresh = onRefreshQuote
+            )
         }
 
         TimerControlButtons(
@@ -273,7 +256,11 @@ fun TimerCard(
             )
 
             Text(
-                text = if (isRunning) "Focus session in progress" else "Ready for a $focusDuration-minute focus session",
+                text = if (isRunning) {
+                    "Focus session in progress"
+                } else {
+                    "Ready for a $focusDuration-minute focus session"
+                },
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
@@ -365,7 +352,12 @@ fun SessionInfoCard(
 }
 
 @Composable
-fun MotivationCard() {
+fun MotivationCard(
+    quoteText: String,
+    quoteAuthor: String,
+    quoteError: Boolean,
+    onRefresh: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -374,7 +366,7 @@ fun MotivationCard() {
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
                 text = "Daily Motivation",
@@ -383,10 +375,30 @@ fun MotivationCard() {
             )
 
             Text(
-                text = "\"Small progress is still progress.\"",
+                text = "\"$quoteText\"",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSecondaryContainer
             )
+
+            if (quoteAuthor.isNotBlank()) {
+                Text(
+                    text = "— $quoteAuthor",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+
+            if (quoteError) {
+                Text(
+                    text = "Offline fallback message is being shown.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+
+            OutlinedButton(onClick = onRefresh) {
+                Text("Refresh Quote")
+            }
         }
     }
 }
